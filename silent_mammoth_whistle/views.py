@@ -8,6 +8,13 @@ from django.utils.dateformat import format as format_date
 from django.utils import timezone
 from datetime import date, datetime, timedelta
 
+try:
+	from invitations.utils import get_invitation_model
+	Invitation = get_invitation_model()
+except ModuleNotFoundError:
+	Invitation = None
+
+
 from .models import *
 from .forms import *
 
@@ -214,6 +221,10 @@ def index(request, requested_date=None):
 	# Get a list of new users for the month
 	new_users = get_user_model().objects.filter(is_superuser=False, last_login__isnull=False, date_joined__year=requested_date.year, date_joined__month=requested_date.month).order_by('date_joined')
 
+	# Get django-invitations (if applicable)
+	if Invitation:
+		invitations = Invitation.objects.all()
+
 	return TemplateResponse(request, 'silent_mammoth_whistle/index.html', {
 		'date': requested_date,
 		'day_str': format_date(requested_date, "l jS"),
@@ -235,6 +246,7 @@ def index(request, requested_date=None):
 		'top_viewport_dimensions': top_viewport_dimensions,
 		'total_viewport_dimensions': total_viewport_dimensions,
 		'new_users': new_users,
+		'invitations': invitations,
 	})
 
 @require_http_methods(["GET"])

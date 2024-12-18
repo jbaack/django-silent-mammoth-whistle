@@ -121,3 +121,8 @@ The JavaScript API is similar
 .. code-block:: javascript
 
 	whistle('Edit dialog box open')
+
+Bot detection
+=============
+
+Bot traffic is recorded and then hidden when viewing whistles. This 

@@ -99,7 +99,7 @@ h1, h2 {
 	padding: var(--sl-spacing-large);
 	padding-bottom: var(--sl-spacing-small);
 }
-#top-tables-container {
+.table-container-group {
 	display: flex;	
 	gap: var(--sl-spacing-3x-large);
 }

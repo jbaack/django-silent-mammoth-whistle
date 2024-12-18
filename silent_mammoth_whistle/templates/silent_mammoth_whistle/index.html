@@ -43,7 +43,7 @@
 					{% include "silent_mammoth_whistle/_chart_javascript.html" %}
 				</div>
 				{% if top_useragents or top_viewport_dimensions %}
-					<div id="top-tables-container" class='monthly-stats-section'>
+					<div class='monthly-stats-section table-container-group'>
 						{% if top_useragents %}
 							<div class='table-container'>
 								<div class="little-title">Top platforms</div>
@@ -88,7 +88,7 @@
 						{% endif %}
 					</div>
 				{% endif %}
-				<div id="new-users" class='monthly-stats-section'>
+				<div class='monthly-stats-section table-container-group'>
 					<div class='table-container'>
 						<div class="little-title">New users</div>
 						{% if not new_users %}
@@ -112,6 +112,32 @@
 							</table>
 						{% endif %}
 					</div>
+					{% comment %} Many projects won't have django-invitations installed so this html is only used when they do {% endcomment %}
+					{% if invitations %}
+						<div class='table-container'>
+							<div class="little-title">Active invitations</div>
+							{% if invitations|length == 0 %}
+								<div id="no-new-users-message">No active invitations</div>
+							{% else %}
+								<table>
+									<thead>
+										<tr>
+											<td>Recipient</td>
+											<td>Datetime sent</td>
+										</tr>
+									</thead>
+									<tbody>
+										{% for invitation in invitations %}
+											<tr>
+												<td>{{ invitation.email }}</td>
+												<td>{{ invitation.sent|date:"j F h:i" }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							{% endif %}
+						</div>
+					{% endif %}
 				</div>
 			</div>
 		{% endif %}
