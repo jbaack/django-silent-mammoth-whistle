@@ -12,6 +12,7 @@ Features
 * JavaScript function for tracking client-side actions
 * Separate reporting of authenticated and anonymous sessions
 * Shows top platforms, top user-agents (using `user-agents <https://pypi.org/project/user-agents/>`_), top viewport sizes, and new users, for each month
+* Detects and hides bot traffic
 * Tracking cookies can be disabled (you just won't see viewport size data)
 * All data is stored in a single table with no relations to your project's tables
 

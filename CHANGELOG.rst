@@ -15,7 +15,7 @@ Improvements
 Breaking change
 ---------------
 
-The bot filtering relies on clients executing some JavaScript (sends a 'PING' request) which is then used to filter out sessions that don't have it. It seems bots don't generally execute the JavaScript. As a result, old sessions (those created before this update) will be hidden.
+* The bot filtering relies on clients executing some JavaScript (sends a 'PING' request) which is then used to filter out sessions that don't have it. It seems bots don't generally execute the JavaScript. As a result, old sessions (those created before this update) will be hidden.
 
 1.2.4 and 1.2.5 (18 September 2024)
 ===================================
