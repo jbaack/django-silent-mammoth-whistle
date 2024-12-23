@@ -51,12 +51,12 @@ Installation
 	
 5. Add ``<script src="{% static 'silent_mammoth_whistle/js/whistle.js' %}"></script>`` to your templates
 
-6. Run ``migrations ./manage.py migrate silent_mammoth_whistle``
+6. Run migrations ``./manage.py migrate silent_mammoth_whistle``
 
 Configuration
 =============
 
-All configuration is optional
+All configuration is optional. The default configuration will track request methods, paths (urls), and response status codes.
 
 settings.py
 -----------
@@ -65,15 +65,7 @@ settings.py
 
 	Defaults to ``'id'``
 
-	The name of a ``User`` model attribute that is used as the unqiue user identifier. It is displayed in the UI and is used for determining which web requests belong to which users.
-
-
-``WHISTLE_AUTO_LOG``
-
-	Defaults to ``True``
-
-	When True, all web requests are tracked. Disable this feature if you want to record only specific requests.
-
+	The name of a ``User`` model attribute that is used as the unqiue user identifier. It is displayed in the UI and is used for determining which web requests belong to which users. Sessions are based on this id.
 
 ``WHISTLE_CLIENT_EVENT_PATH``
 
@@ -81,18 +73,39 @@ settings.py
 
 	The url used by the ``whistle`` function in ``whistle.js`` to make web requests using JavaScript.
 
+	This is used in 2 places: 1) in the middleware, and 2) in the whistle.js file. If you change this setting, you will need to set the same value in a global (window) var called ``whistleClientEventPath`` using JavaScript.
 
 ``WHISTLE_COOKIES``
 
 	Defaults to ``True``
 
-	When True, a cookie is added to clients and is used with some JavaScript to record viewport dimensions. I don't think this constitutes a "tracking cookie", but if you think it does, and you don't want that, just set this to ``False``.
+	When True, a cookie is added to clients and is used with some JavaScript to record viewport dimensions. I don't think this constitutes a "tracking cookie", but if you think it does and you don't want that, just set this to ``False``.
+
+``WHISTLE_AUTOLOG_REQUEST_METHOD``
+
+	Defaults to ``True``
+
+	Automatically adds the request method (e.g. POST) to the whistle. 
+
+``WHISTLE_AUTOLOG_REQUEST_PATH``
+
+	Defaults to ``True``
+
+	Automatically adds the request path to the whistle.
+
+``WHISTLE_AUTOLOG_RESPONSE_CODE``
+
+	Defaults to ``True``
+
+	Automatically adds the response status code to the whistle. 
+	
+	When this is True, a count of 4xx and 5xx response codes is also displayed next to each session on the main page, and 4xx and 5xx responses are given an orange/red color when viewing the whistle details for a session.
 
 
 Usage
 =====
 
-By default, silent mammoth whistle will record all web requests (specifically the HTTP method and the URL for each).
+By default, silent mammoth whistle will record all web requests (specifically the HTTP method, response code, and path/URL).
 
 You can also record additional data for a request.
 
@@ -116,11 +129,16 @@ When viewing session details in silent mammoth whistle, you'll see 3 columns: ti
 
 These calls all start with ``request.`` because silent mammoth whistle adds a ``whistle`` object to the standard Django ``request`` object.
 
-The JavaScript API is similar
+JavaScript API
+==============
+
+The JavaScript API is similar to the above.
 
 .. code-block:: javascript
 
 	whistle('Edit dialog box open')
+
+``whistle`` takes an unlimited number of arguments. Each argument is added to the whistle.
 
 Bot detection
 =============

@@ -203,10 +203,25 @@ td.actions {
 	vertical-align: middle;
 }
 
+.status-code-count {
+	font-size: var(--sl-font-size-x-small);
+	text-align: right;
+}
+.warning {
+	color: var(--sl-color-warning-600);
+}
+.danger {
+	color: var(--sl-color-danger-500);
+}
+
 
 /* Session.html */
 .timestamp {
 	text-wrap: nowrap;
+	width: 1%;
+}
+
+.request-method {
 	width: 1%;
 }
 

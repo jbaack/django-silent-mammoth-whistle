@@ -1,4 +1,5 @@
 import re, user_agents
+from http import HTTPStatus
 from django import template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -76,7 +77,7 @@ def small_guids(str):
 		shortened_guid = f"<abbr title='{guid}'>{guid[:3]}...{guid[-3:]}</abbr>"
 		return shortened_guid
 	# Substitute all GUIDs in the string with their shortened versions
-	return re.sub(guid_pattern, replace_guid, str)
+	return mark_safe(re.sub(guid_pattern, replace_guid, str))
 
 @register.filter
 def preferred_user_id(user):
@@ -131,3 +132,14 @@ def ua_is_bot(ua_string):
 		or (ua.browser.family or "").strip().lower() == "googlebot"
 		or (ua.device.family or ua.device.model or "").strip().lower() == "spider"
 	)
+
+@register.filter
+def reason_phrase(status_code):
+    """
+    Returns the status code reason phrase.
+    e.g. passing 200 returns 'OK'.
+    """
+    try:
+        return f'{status_code} {HTTPStatus(status_code).phrase}'
+    except ValueError:
+        return status_code

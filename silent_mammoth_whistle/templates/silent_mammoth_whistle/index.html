@@ -105,7 +105,7 @@
 									{% for user in new_users %}
 										<tr>
 											<td>{{ user|preferred_user_id }}</td>
-											<td>{{ user.date_joined|date:"j F" }}</td>
+											<td>{{ user.date_joined|date:"j M" }}</td>
 										</tr>
 									{% endfor %}
 								</tbody>
@@ -130,7 +130,7 @@
 										{% for invitation in invitations %}
 											<tr>
 												<td>{{ invitation.email }}</td>
-												<td>{{ invitation.sent|date:"j F h:i" }}</td>
+												<td>{{ invitation.sent|date:"j M h:i" }}</td>
 											</tr>
 										{% endfor %}
 									</tbody>

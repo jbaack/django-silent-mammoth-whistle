@@ -3,10 +3,13 @@ from django.http import HttpResponse
 from .forms import WhistleForm
 
 # Set up variables from settings file
-auto_log = getattr(settings, 'WHISTLE_AUTO_LOG', True)
 user_id_field = getattr(settings, 'WHISTLE_USER_ID_FIELD', 'id')
 client_event_path = getattr(settings, 'WHISTLE_CLIENT_EVENT_PATH', '/whistle')
 use_cookies = getattr(settings, 'WHISTLE_COOKIES', True)
+autolog_request_method = getattr(settings, 'WHISTLE_AUTOLOG_REQUEST_METHOD', True)
+autolog_request_path = getattr(settings, 'WHISTLE_AUTOLOG_REQUEST_PATH', True)
+autolog_response_code = getattr(settings, 'WHISTLE_AUTOLOG_RESPONSE_CODE', True)
+
 
 class Whistle:
 	def __init__(self):
@@ -24,10 +27,11 @@ class HttpResponseNoContent(HttpResponse):
     status_code = 204 # No content
 
 
-def save_whistle(request, is_client_event=False):
+def save_whistle(request, response, is_client_event=False):
 	# Save whistle to database, but not for admins
 	if not request.user.is_staff:
-		if len(request.whistle._request) or len(request.whistle._response):
+		# We only save whistles if an AUTOLOG setting is on or the user has explicitly added stuff to the whistle
+		if autolog_request_method or autolog_request_path or autolog_response_code or len(request.whistle._request) or len(request.whistle._response):
 
 			if request.user.is_authenticated:
 				try:
@@ -43,12 +47,15 @@ def save_whistle(request, is_client_event=False):
 					request.session['anonymous_session_key'] = request.session.session_key # We make a copy of the key in the session object because the key changes when the user authenticates and we want to update whistle records that have the anonymous session key to use the user id when the user logs in - see signals.py
 				user_id = request.session.session_key
 
+			# Note: The values for AUTOLOG settings are always saved, the AUTOLOG settings just say whether they should be included in the rendered output automatically.
 			data={
 				'user_id': str(user_id), 
 				'request': "\t".join(request.whistle._request),
+				'request_method': 'CLIENT' if is_client_event else request.method,
+				'request_path': '' if is_client_event else request.path,
 				'response': "\t".join(request.whistle._response),
+				'response_code': response.status_code,
 				'useragent': str( dict.get(request.META, 'HTTP_USER_AGENT', '') ), # Set useragent to empty string if one isn't in headers
-				'is_client_event': is_client_event,
 				'is_authenticated': request.user.is_authenticated,
 				'viewport_dimensions': request.COOKIES.get('viewport_dimensions', ''),
 			}
@@ -72,32 +79,24 @@ class SilentMammothWhistleMiddleware:
 		if request.method == "HEAD":
 			return self.get_response(request)
 
-		# 1. Request part of lifecycle
+		### 1. Request part of lifecycle
 		request.whistle = Whistle()
 
 		# If the whistle is from the client, log it as an event, and prevent request from reaching views.py by returning a response early
 		if request.path == client_event_path:
 			request.whistle.request(request.POST.get('args', '')) # Add the 'args' data from the POST request to the whistle object
-			save_whistle(request, is_client_event=True) # Save whistle
-			return HttpResponseNoContent() # Prevent views.py from processing request (by not creating a new response with get_response)
+			response = HttpResponseNoContent() # Prevent views.py from processing request (by not creating a new response with get_response)
+			save_whistle(request, response, is_client_event=True) # Save whistle
+			return response
 
-		# Add the request type (GET, POST, etc) and url to the request
-		# This is just a convenient way of doing it. It could be done in the view, but more often than not, we will want these attributes so there's no need to manually whistle them each time.
-		if auto_log:
-			request.whistle.request(request.method, request.get_full_path())
-
-		# 2. Calling View part of lifecycle
+		### 2. Calling View part of lifecycle
 		response = self.get_response(request)
-
-		if auto_log:
-			# This line is called after the view, and the view might have added things to the whistle.response object, so we use insert here so the http status code and reason are the first things printed in the table's response column
-			request.whistle._response.insert(0, f'{str(response.status_code)} {str(response.reason_phrase)}')
 
 		if use_cookies and 'viewport_dimensions' not in request.COOKIES:
 			response.set_cookie("viewport_dimensions") # Defaults to path=/
 
-		# 3. Response part of lifecycle
-		save_whistle(request)
+		### 3. Response part of lifecycle
+		save_whistle(request, response)
 
 		return response
 	

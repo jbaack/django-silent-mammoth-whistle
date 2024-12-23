@@ -50,7 +50,8 @@
 				<tr>
 					<td class='timestamp hidden'>Timestamp</td>
 					<td class='number-cell' style="white-space: nowrap;">Time delta</td>
-					<td>Request</td>
+					{% comment %} If the request method is being shown, we add it to its own column so things are easier to read {% endcomment %}
+					<td{% if autolog_request_method %} colspan=2{% endif %}>Request</td>
 					<td>Response</td>
 				</tr>
 			</thead>
@@ -62,7 +63,7 @@
 						{% if not forloop.first %}
 							{% if whistle|browser_change:previous_whistle %}
 								<tr>
-									<td colspan=4>
+									<td {% if autolog_request_method %}colspan=5{% else %}colspan=4{% endif %}>
 										<div class="browser-change">
 											<em>Browser change:</em>
 											{% if whistle.useragent %}<div class="data"><sl-icon name="globe"></sl-icon> {{ whistle.useragent|ua_parse  }}</div>{% endif %}
@@ -73,7 +74,7 @@
 							{% endif %}
 						{% endif %}
 
-						<tr{% if whistle.is_client_event %} class="client-event"{% endif %}>
+						<tr class='{% if autolog_response_code and whistle.response_code >= 400 and whistle.response_code <= 499 %}warning{% elif autolog_response_code and whistle.response_code >= 500 and whistle.response_code <= 599 %}danger{% endif %}'>
 							<td class='timestamp hidden'>{{ whistle.datetime|date:'r' }}</td>
 							<td class='number-cell small-cell'>
 								{% if forloop.first %}
@@ -82,14 +83,32 @@
 									{% time_duration_condensed previous_whistle.datetime whistle.datetime %}
 								{% endif %}
 							</td>
-							<td>{% if whistle.is_client_event %}CLIENT&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}{{ whistle.request|html_tabs|small_guids }}</td>
-							<td>{{ whistle.response|html_tabs|small_guids }}</td>
+							{% if autolog_request_method %}
+								<td class='request-method'>
+									{{ whistle.request_method }}
+								</td>
+							{% endif %}
+							<td>
+								{% if autolog_request_path and whistle.request_path %}
+									{{ whistle.request_path|small_guids }}&nbsp;&nbsp;&nbsp;&nbsp;
+								{% endif %}
+								{{ whistle.request|html_tabs|small_guids }}
+							</td>
+							<td>
+								{% if autolog_response_code and whistle.response_code %}
+									<abbr title="{{ whistle.response_code|reason_phrase }}">{{ whistle.response_code }}</abbr>&nbsp;&nbsp;&nbsp;&nbsp;
+								{% endif %}
+								{{ whistle.response|html_tabs|small_guids }}
+							</td>
 						</tr>
 					{% endwith %}
 				{% endfor %}
 				<tr>
 					<td class='timestamp hidden'></td>
 					<td class='number-cell small-cell'>END</td>
+					{% if autolog_request_method %}
+						<td></td>
+					{% endif %}
 					<td></td>
 					<td></td>
 				</tr>

@@ -1,4 +1,5 @@
-from django.db.models import Count, Min, Max, F, CharField, Exists, OuterRef
+from django.conf import settings
+from django.db.models import Count, Min, Max, F, CharField, Exists, OuterRef, Case, When, IntegerField
 from django.db.models.functions import Concat
 from django.views.decorators.http import require_http_methods
 from django.template.response import TemplateResponse
@@ -13,7 +14,6 @@ try:
 	Invitation = get_invitation_model()
 except ModuleNotFoundError:
 	Invitation = None
-
 
 from .models import *
 from .forms import *
@@ -54,19 +54,19 @@ def adjust_month(date, direction):
 	return result_date_str
 
 def adjust_day(date, direction):
-    '''
+	'''
 	Returns a date that is one day forward or backwards in time.
 
 	Direction can be "next", which increases the day by 1, or "previous": which reduces the day by 1
 	'''
-    if direction == "next":
-        adjusted_date = date + timedelta(days=1)
-    elif direction == "previous":
-        adjusted_date = date - timedelta(days=1)
-    else:
-        raise ValueError("The direction parameter must be 'next' or 'previous'")
-    result_date_str = adjusted_date.strftime("%Y-%m-%d")
-    return result_date_str
+	if direction == "next":
+		adjusted_date = date + timedelta(days=1)
+	elif direction == "previous":
+		adjusted_date = date - timedelta(days=1)
+	else:
+		raise ValueError("The direction parameter must be 'next' or 'previous'")
+	result_date_str = adjusted_date.strftime("%Y-%m-%d")
+	return result_date_str
 
 
 '''
@@ -148,6 +148,26 @@ def index(request, requested_date=None):
 	unauthed_chart_data = create_chart_data(False, requested_date)[0]
 
 	
+
+	# Get the list of unique status codes for 4xx and 5xx responses.
+	status_codes = Whistle.objects.filter(
+		is_authenticated=True,
+		datetime__date=requested_date,
+		response_code__gte=400
+	).exclude(request='PING').values_list('response_code', flat=True).distinct()
+
+	# Build annotations for each status code.
+	status_code_annotations = {
+		f'count_{code}': Count(
+			Case(
+				When(response_code=code, then=1),
+				output_field=IntegerField()
+			)
+		)
+		for code in status_codes
+	}
+
+
 	# For the selected day,
 	#	For each user that has 1 or more whistles that day
 	#		get the count of the whistles
@@ -162,8 +182,23 @@ def index(request, requested_date=None):
 		.annotate(
 			num_whistles=Count('user_id'), 
 			min_time=Min('datetime'), 
-			max_time=Max('datetime'))
+			max_time=Max('datetime'),
+			**status_code_annotations)
 		.order_by('-max_time') )
+	
+	# Reformat the data for template rendering
+	d = []
+	for item in authed_whistles_per_user:
+		status_counts = {str(code): item.get(f'count_{code}', 0) for code in status_codes}
+		d.append({
+			'user_id': item['user_id'],
+			'date': item['datetime__date'],
+			'num_whistles': item['num_whistles'],
+			'min_time': item['min_time'],
+			'max_time': item['max_time'],
+			'status_counts': status_counts
+		})
+	authed_whistles_per_user = d
 
 	### Unauthed whistles pseudo code
 	#
@@ -182,9 +217,24 @@ def index(request, requested_date=None):
 			num_whistles=Count('user_id'), 
 			min_time=Min('datetime'), 
 			max_time=Max('datetime'),
-			nonbot=Exists(nonbot_whistles))
+			nonbot=Exists(nonbot_whistles),
+			**status_code_annotations)
 		.filter(nonbot=True)
 		.order_by('-num_whistles') )
+	
+	# Reformat the data for template rendering
+	d = []
+	for item in unauthed_whistles_per_user:
+		status_counts = {str(code): item.get(f'count_{code}', 0) for code in status_codes}
+		d.append({
+			'user_id': item['user_id'],
+			'date': item['datetime__date'],
+			'num_whistles': item['num_whistles'],
+			'min_time': item['min_time'],
+			'max_time': item['max_time'],
+			'status_counts': status_counts
+		})
+	unauthed_whistles_per_user = d
 
 	# Top platform (browser, device, etc), and viewport dimensions
 	# These are per user in the given month. So if a user always has the same useragent, that will count as one. If they have 2 user agents in the month, that counts as 2. This is achieved by grouping the worthy whistles by useragent/viewport, and then counting the number of users who had that useragent/viewport.
@@ -247,6 +297,7 @@ def index(request, requested_date=None):
 		'total_viewport_dimensions': total_viewport_dimensions,
 		'new_users': new_users,
 		'invitations': invitations,
+		'autolog_response_code': getattr(settings, 'WHISTLE_AUTOLOG_RESPONSE_CODE', True),
 	})
 
 @require_http_methods(["GET"])
@@ -271,4 +322,8 @@ def session(request, user_id, requested_date):
 		'useragent': whistles.first().useragent,
 		'viewport_dimensions': getattr(whistles.exclude(viewport_dimensions='').first(), 'viewport_dimensions', ''),
 		'is_authenticated': whistles.first().is_authenticated,
+		'autolog_request_method': getattr(settings, 'WHISTLE_AUTOLOG_REQUEST_METHOD', True),
+		'autolog_request_path': getattr(settings, 'WHISTLE_AUTOLOG_REQUEST_PATH', True),
+		'autolog_response_code': getattr(settings, 'WHISTLE_AUTOLOG_RESPONSE_CODE', True),
 	})
+	# TODO change the autolog context variables and template stuff to be about whether each part should be displayed, which is about whether at least one of a autolog type exists

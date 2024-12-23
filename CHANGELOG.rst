@@ -3,8 +3,19 @@
 Changelog
 #########
 
-2.0.0 (10 October 2024)
-=======================
+2.1 (22 December 2024)
+======================
+
+Improvements
+------------
+
+* Added counts of 4xx and 5xx responses to the session summary on the main page.
+* Added color to 4xx and 5xx responses on the whistle details page.
+* Added 3 new settings: ``WHISTLE_AUTOLOG_REQUEST_METHOD``, ``WHISTLE_AUTOLOG_REQUEST_PATH``, and ``WHISTLE_AUTOLOG_RESPONSE_CODE``. These replace the ``WHISTLE_AUTO_LOG`` setting. See README.rst for details.
+
+
+2.0 (10 October 2024)
+=====================
 
 Improvements
 ------------

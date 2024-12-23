@@ -15,7 +15,17 @@
 			{% for row in whistles_per_user %}
 				<tr>
 					<td class='main-cell'>{{ row.user_id }}</td>
-					<td class='number-cell'>{{ row.num_whistles }}</td>
+					<td class='number-cell nowrap'>
+						{{ row.num_whistles }}
+						{% if autolog_response_code %}
+							{% for code, count in row.status_counts.items %}
+								{% if count > 0 %}
+									{% comment %} <sl-badge variant="{% if code == "500" %}danger{% else %}warning{% endif %}">{{ code }} ({{ count }})</sl-badge> {% endcomment %}
+									<div class='status-code-count {% if code == "500" %}danger{% else %}warning{% endif %}'>{{ code }} · {{ count }}</div>
+								{% endif %}
+							{% endfor %}
+						{% endif %}
+					</td>
 					<td class='number-cell nowrap'>
 						<div>{% time_duration row.min_time row.max_time %}</div>
 						<div class='support-data'>{{ row.min_time|date:"H:i" }} to {{ row.max_time|date:"H:i" }}</div>
