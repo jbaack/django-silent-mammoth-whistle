@@ -93,7 +93,7 @@ class SilentMammothWhistleMiddleware:
 		response = self.get_response(request)
 
 		if use_cookies and 'viewport_dimensions' not in request.COOKIES:
-			response.set_cookie("viewport_dimensions") # Defaults to path=/
+			response.set_cookie('viewport_dimensions', samesite='Strict') # Defaults to path=/
 
 		### 3. Response part of lifecycle
 		save_whistle(request, response)

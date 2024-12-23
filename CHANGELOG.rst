@@ -3,6 +3,14 @@
 Changelog
 #########
 
+2.2 (23 December 2024)
+======================
+
+Improvements
+------------
+
+* viewport dimensions cookie now uses ``SameSite: Strict``
+
 2.1 (22 December 2024)
 ======================
 
