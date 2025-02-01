@@ -3,7 +3,14 @@ Django Silent Mammoth Whistle
 
 A super-simple user analytics tool that tracks user behaviour based on web requests to your Django app.
 
-It's intended for use with libraries such as `htmx <https://htmx.org>`_, which generally make a web request for each user interaction. It also includes a JavaScript function for tracking purely client-side actions (e.g. things you might use `Alpine.js <https://alpinejs.dev/>`_ for). The UI is designed for small projects where understanding individual user behaviour is useful.
+.. image:: docs/example.jpeg
+   :alt: Example of the main page in Silent Mammoth Whistle
+   :width: 800px
+   :align: center
+
+It's intended for use with libraries such as `htmx <https://htmx.org>`_, which generally make a web request for each user interaction. It also includes a JavaScript function for tracking purely client-side actions (e.g. things you might use `Alpine.js <https://alpinejs.dev/>`_ for). 
+
+The UI is designed for small projects where understanding individual user behaviour is useful.
 
 Features
 ========
@@ -143,4 +150,4 @@ The JavaScript API is similar to the above.
 Bot detection
 =============
 
-Bot traffic is recorded and then hidden when viewing whistles. This 
+Bot traffic is recorded and then hidden when viewing whistles. 
