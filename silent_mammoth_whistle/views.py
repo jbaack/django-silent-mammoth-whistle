@@ -274,6 +274,8 @@ def index(request, requested_date=None):
 	# Get django-invitations (if applicable)
 	if Invitation:
 		invitations = Invitation.objects.all()
+	else:
+		invitations = None
 
 	return TemplateResponse(request, 'silent_mammoth_whistle/index.html', {
 		'date': requested_date,
